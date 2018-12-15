@@ -10,6 +10,7 @@ import pandas as pd
 import pickle
 import tensorflow as tf
 from os.path import isfile, isdir
+import time
 
 (x_train, y_train), (x_test, y_test) = tf.keras.datasets.mnist.load_data(path='mnist.npz')
 
@@ -285,7 +286,8 @@ def printResult(epoch, numberOfEpoch, trainLoss, validationLoss, validationAccur
 save_dir = './save'
 with tf.Session(graph=graph) as sess:
     sess.run(tf.global_variables_initializer())
-    
+    print("Start train")
+    t0 = time.time()
     for epoch in range(numberOfEpoch):
         # training data & validation data
         train_x, val_x, train_y, val_y = train_test_split(trainData, one_hot_trainLabel,                                                      test_size = 0.2)   
@@ -308,6 +310,8 @@ with tf.Session(graph=graph) as sess:
         # print out
         printResult(epoch, numberOfEpoch, trainLoss, valLoss, valAcc)
     # save
+    print("Train finished")
+    print ("training time:", round(time.time()-t0, 3), "s")
     saver = tf.train.Saver()
     saver.save(sess, save_dir)
 
@@ -316,8 +320,6 @@ with tf.Session(graph=graph) as sess:
 
 
 # test result
-
-print(testData.shape)
 
 loaded_Graph = tf.Graph()
 with tf.Session(graph=loaded_Graph) as sess:
@@ -331,34 +333,19 @@ with tf.Session(graph=loaded_Graph) as sess:
     prob = sess.run(tf.argmax(loaded_prob,1), feed_dict = {loaded_x: testData})
 
 
-# In[ ]:
+count_right = 0
+count_wrong = 0
+count_total = 0
 
+for i,p in enumerate(prob):
+    if p == y_test[i]:
+        count_right += 1
+    else:
+        count_wrong += 1
+    count_total += 1
 
-which = 1
-print('predicted labe: {}'.format(str(prob[which])))
-plotNumber(np.array([testData[which, :]]),imageSize)
-
-
-# In[ ]:
-
-
-print(prob)
-
-
-# In[ ]:
-
-
-import csv
-outputFile_dir = 'output.csv'
-header = ['ImageID','Label']
-
-
-# In[ ]:
-
-
-with open(outputFile_dir, 'w') as csvFile:
-    writer = csv.writer(csvFile, delimiter = ',')
-    writer.writerow(header)
-    for i, p in enumerate(prob):
-        writer.writerow([str(i+1), str(p)])
+print("Correct:", count_right)
+print("Wrong:", count_wrong)
+print("Total:", count_total)
+print("Ratio:", count_right/count_total)
 
